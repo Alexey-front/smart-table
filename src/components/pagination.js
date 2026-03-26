@@ -5,33 +5,54 @@ export const initPagination = ({pages, fromRow, toRow, totalRows}, createPage) =
     const pageTemplate = pages.firstElementChild.cloneNode(true);
     pages.firstElementChild.remove();
 
-    return (data, state, action) => {
-        // @todo: #2.1 — посчитать количество страниц, объявить переменные и константы
-        const rowsPerPage = state.rowsPerPage; // Количество строк
-        const pageCount = Math.ceil(data.length / rowsPerPage); // Кол-во страниц, получаем, разделяя строки, то есть количество
-        let page = state.page;                                  // страниц зависит от количества строк и того, сколько мы хотим отобразить
-                                                                // строк на странице  
+        let pageCount;
 
-        // @todo: #2.6 — обработать действия
-        if (action) switch(action.name) {
+        const applyPagination = (query, state, action) => {
+            const limit = state.rowsPerPage;
+            let page = state.page;
+            if (action) switch(action.name) {
             case 'prev': page = Math.max(1, page - 1); break;            // переход на предыдущую страницу
-            case 'next': page = Math.min(pageCount, page + 1); break;    // переход на следующую страницу
-            case 'first': page = 1; break;                                // переход на первую страницу
-            case 'last': page = pageCount; break;
+             case 'next': page = Math.min(pageCount, page + 1); break;    // переход на следующую страницу
+             case 'first': page = 1; break;                                // переход на первую страницу
+             case 'last': page = pageCount; break;
+         }
+         return Object.assign({}, query, {
+            limit,
+            page
+         })
         }
-        // @todo: #2.4 — получить список видимых страниц и вывести их
-        const visiblePages = getPages(page, pageCount, 5);
-        pages.replaceChildren(...visiblePages.map(pageNumber => {
+
+        const updatePagination = (total, { page, limit }) => {
+            pageCount = Math.ceil(total / limit)
+
+            const visiblePages = getPages(page, pageCount, 5);
+            pages.replaceChildren(...visiblePages.map(pageNumber => {
             const el = pageTemplate.cloneNode(true);
             return createPage(el, pageNumber, pageNumber === page);
-        }))
-        // @todo: #2.5 — обновить статус пагинации
-        fromRow.textContent = (page - 1) * rowsPerPage + 1;
-        toRow.textContent = Math.min((page * rowsPerPage), data.length);
-        totalRows.textContent = data.length;
+           }))
 
-        // @todo: #2.2 — посчитать сколько строк нужно пропустить и получить срез данных
-        const skip = (page - 1) * rowsPerPage;
-        return data.slice(skip, skip + rowsPerPage);
-    }
-}
+           fromRow.textContent = (page - 1) * limit + 1;
+           toRow.textContent = Math.min((page * limit), total);
+           totalRows.textContent = total;
+        } 
+        return {
+            updatePagination,
+            applyPagination
+        }
+        //         // @todo: #2.4 — получить список видимых страниц и вывести их
+//         const visiblePages = getPages(page, pageCount, 5);
+//         pages.replaceChildren(...visiblePages.map(pageNumber => {
+//             const el = pageTemplate.cloneNode(true);
+//             return createPage(el, pageNumber, pageNumber === page);
+//         }))
+//         // @todo: #2.5 — обновить статус пагинации
+//         fromRow.textContent = (page - 1) * rowsPerPage + 1;
+//         toRow.textContent = Math.min((page * rowsPerPage), data.length);
+//         totalRows.textContent = data.length;
+
+//         // @todo: #2.2 — посчитать сколько строк нужно пропустить и получить срез данных
+//         const skip = (page - 1) * rowsPerPage;
+//         return data.slice(skip, skip + rowsPerPage);
+//     }
+// 
+    }                          
